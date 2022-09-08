@@ -43,7 +43,7 @@
                 map: map,
                 constraints: {
                     altitude: {
-                        max: 120000000000000000 // meters
+                        max: 12000000000000 // meters
                     }
                 },
                 // force the popup to the docked position
@@ -101,7 +101,7 @@
                                     material: {
                                         color: [192, 192, 192, 0.5]
                                     },
-                                    size: 3
+                                    size: 1
                                 }
                             ]
                         }
@@ -168,10 +168,15 @@
                         let graphic = new Graphic({
                             geometry: satelliteLoc,
                             symbol: {
-                                type: "picture-marker", // autocasts as new PictureMarkerSymbol()
-                                url: "https://developers.arcgis.com/javascript/latest/sample-code/satellites-3d/live/satellite.png",
-                                width: 48,
-                                height: 48
+                                type: "point-3d",  // autocasts as new PointSymbol3D()
+                                symbolLayers: [{
+                                    type: "object",  // autocasts as new ObjectSymbol3DLayer()
+                                    width: 100000,    // diameter of the object from east to west in meters
+                                    height: 10,  // height of object in meters
+                                    depth: 100000,   // diameter of the object from north to south in meters
+                                    resource: { primitive: "cone" },
+                                    material: { color: "red" }
+                                }]
                             },
                             attributes: {
                                 name: commonName,
