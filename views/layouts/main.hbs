@@ -26,6 +26,10 @@
     />
     <script src="https://js.arcgis.com/4.24/"></script>
     <script src="https://developers.arcgis.com/javascript/latest/sample-code/satellites-3d/live/satellite.js"></script>
+    <script
+            src="https://code.jquery.com/jquery-3.6.1.min.js"
+            integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ="
+            crossorigin="anonymous"></script>
     <script>
         require([
             "esri/Map",
@@ -116,8 +120,91 @@
 
             map.addMany([satelliteLayer, satelliteTracks]);
 
+            //Options = query Params in JSON
+            function getSats(options){
+                let opt = ""
+                for (let key in options){
+                    let value = options[key];
+                    opt+= "&"+key+"="+value
+                }
+
+                let url = "https://aviation-edge.com/v2/public/satelliteDetails?key=b73107-fd522e&limit=30000000"+opt
+                $.ajax({
+                    method: "GET",
+                    url: url
+                }).done(function( msg ) {
+                    console.log(msg)
+                    displaySats(msg)
+                });
+            }
+
+            function displaySats(arr){
+                for (let i = 0; i < arr.length; i++) {
+
+                    let sat = arr[i];
+                    let commonName = sat.name
+                    let line1 = sat.tle1
+                    let line2 = sat.tle2
+                    let time = Date.now();
+
+                    const launchYear = Number(sat.launchYear)
+                    const launchNum = Number(sat.launchNum);
+                    const noradId = Number(line1.substring(3, 7));
+                    let satelliteLoc = null;
+
+                    try {
+                        satelliteLoc = getSatelliteLocation(new Date(time), line1, line2);
+                    } catch (error) {
+                    }
+
+                    if (satelliteLoc !== null) {
+                        let template = {
+                            // autocasts as new PopupTemplate()
+                            title: "{name}",
+                            content: "Launch number {number} of {year}",
+                            actions: [
+                                {
+                                    // Create a popup action to display the satellite track.
+                                    title: "Show Satellite Track",
+                                    id: "track",
+                                    className: "esri-icon-globe"
+                                }
+                            ]
+                        };
+
+                        let graphic = new Graphic({
+                            geometry: satelliteLoc,
+                            symbol: {
+                                type: "point-3d",  // autocasts as new PointSymbol3D()
+                                symbolLayers: [{
+                                    type: "object",  // autocasts as new ObjectSymbol3DLayer()
+                                    width: 100000,    // diameter of the object from east to west in meters
+                                    height: 10,  // height of object in meters
+                                    depth: 100000,   // diameter of the object from north to south in meters
+                                    resource: {primitive: "cone"},
+                                    material: {color: "red"}
+                                }]
+                            },
+                            attributes: {
+                                name: commonName,
+                                year: launchYear,
+                                id: noradId,
+                                number: launchNum,
+                                time: time,
+                                line1: line1,
+                                line2: line2
+                            },
+                            popupTemplate: template
+                        });
+
+                        satelliteLayer.add(graphic);
+                    }
+                }
+            }
+
+            getSats()
             // request the satallite data from hosted site
-            let url =
+            /*let url =
                     "/sats";
 
             esriRequest(url, {
@@ -195,7 +282,7 @@
                         }
                     }
                 }
-            });
+            });*/
 
             function getSatelliteLocation(date, line1, line2) {
                 /****************************************************
