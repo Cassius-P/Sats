@@ -22,15 +22,5 @@ router.get('/', (req,res) => {
 });
 
 
-router.get('/sats', (req,res) => {
-    fs.readFile('./sat.txt', 'utf8', (err, data) => {
-        if (err) {
-            console.error(err);
-            return;
-        }
-        res.send(data)
-    });
-});
-
-app.listen(3000);
+app.listen(process.env.PORT || 5000);
 console.log('Running at Port 3000');
