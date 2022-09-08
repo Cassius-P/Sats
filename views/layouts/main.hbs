@@ -26,6 +26,7 @@
     />
     <script src="https://js.arcgis.com/4.24/"></script>
     <script src="https://developers.arcgis.com/javascript/latest/sample-code/satellites-3d/live/satellite.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <script
             src="https://code.jquery.com/jquery-3.6.1.min.js"
             integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ="
@@ -139,13 +140,23 @@
             }
 
             function displaySats(arr){
-                for (let i = 0; i < arr.length; i++) {
-
+                let len = arr.length
+                for (let i = 0; i < len; i++) {
+                    console.log(i, "/", arr.length)
                     let sat = arr[i];
+                    let type = sat.type
+                    if(type.toLowerCase() !== "payload"){
+                        continue;
+                    }
                     let commonName = sat.name
                     let line1 = sat.tle1
                     let line2 = sat.tle2
                     let time = Date.now();
+                    let country = sat.country
+
+                    if(country.toLowerCase() === "cis"){
+
+                    }
 
                     const launchYear = Number(sat.launchYear)
                     const launchNum = Number(sat.launchNum);
@@ -159,9 +170,8 @@
 
                     if (satelliteLoc !== null) {
                         let template = {
-                            // autocasts as new PopupTemplate()
                             title: "{name}",
-                            content: "Launch number {number} of {year}",
+                            content: "Lancement num {number} de {year}, depuis {country}",
                             actions: [
                                 {
                                     // Create a popup action to display the satellite track.
@@ -171,6 +181,9 @@
                                 }
                             ]
                         };
+                        setNb(country)
+                        let color = getColor(country).color
+                        country = getColor(country).country
 
                         let graphic = new Graphic({
                             geometry: satelliteLoc,
@@ -178,11 +191,11 @@
                                 type: "point-3d",  // autocasts as new PointSymbol3D()
                                 symbolLayers: [{
                                     type: "object",  // autocasts as new ObjectSymbol3DLayer()
-                                    width: 100000,    // diameter of the object from east to west in meters
+                                    width: 150000,    // diameter of the object from east to west in meters
                                     height: 10,  // height of object in meters
-                                    depth: 100000,   // diameter of the object from north to south in meters
+                                    depth: 150000,   // diameter of the object from north to south in meters
                                     resource: {primitive: "cone"},
-                                    material: {color: "red"}
+                                    material: {color}
                                 }]
                             },
                             attributes: {
@@ -190,6 +203,7 @@
                                 year: launchYear,
                                 id: noradId,
                                 number: launchNum,
+                                country,
                                 time: time,
                                 line1: line1,
                                 line2: line2
@@ -203,94 +217,51 @@
             }
 
             getSats()
-            // request the satallite data from hosted site
-            /*let url =
-                    "/sats";
 
-            esriRequest(url, {
-                responseType: "text"
-            }).then(function (response) {
-                // The requested data
-                console.log(response)
-                const txt = response.data;
-
-                // Parse the satellite TLE data
-                const lines = txt.split("\n");
-                const count = (lines.length / 3).toFixed(0);
-
-                for (let i = 0; i < count; i++) {
-                    let commonName = lines[i * 3 + 0];
-                    let line1 = lines[i * 3 + 1];
-                    let line2 = lines[i * 3 + 2];
-                    let time = Date.now();
-
-                    const designator = line1.substring(9, 16);
-                    const launchYear = designator.substring(0, 2);
-                    const fullLaunchYear =
-                            Number(launchYear) >= 57 ? `19${launchYear}` : `20${launchYear}`;
-                    const launchNum = Number(designator.substring(2, 5)).toString();
-                    const noradId = Number(line1.substring(3, 7));
-                    let satelliteLoc = null;
-
-                    try {
-                        satelliteLoc = getSatelliteLocation(new Date(time), line1, line2);
-                    } catch (error) {
-                    }
-
-                    if (satelliteLoc !== null) {
-                        let template = {
-                            // autocasts as new PopupTemplate()
-                            title: "{name}",
-                            content: "Launch number {number} of {year}",
-                            actions: [
-                                {
-                                    // Create a popup action to display the satellite track.
-                                    title: "Show Satellite Track",
-                                    id: "track",
-                                    className: "esri-icon-globe"
-                                }
-                            ]
-                        };
-
-                        let graphic = new Graphic({
-                            geometry: satelliteLoc,
-                            symbol: {
-                                type: "point-3d",  // autocasts as new PointSymbol3D()
-                                symbolLayers: [{
-                                    type: "object",  // autocasts as new ObjectSymbol3DLayer()
-                                    width: 100000,    // diameter of the object from east to west in meters
-                                    height: 10,  // height of object in meters
-                                    depth: 100000,   // diameter of the object from north to south in meters
-                                    resource: { primitive: "cone" },
-                                    material: { color: "red" }
-                                }]
-                            },
-                            attributes: {
-                                name: commonName,
-                                year: fullLaunchYear,
-                                id: noradId,
-                                number: launchNum,
-                                time: time,
-                                line1: line1,
-                                line2: line2
-                            },
-                            popupTemplate: template
-                        });
-
-                        satelliteLayer.add(graphic);
+            function getColor(country){
+                let colors = {
+                    "us": {
+                        color:'#1f77b4',
+                        country:"Etats-Unis"
+                    },
+                    "esa": {
+                        color:'#82DEFA',
+                        country:"Europe"
+                    },
+                    "prc": {
+                        color:'#ff7f0e',
+                        country:"Chine"
+                    },
+                    "uk": {
+                        color:'#9467bd',
+                        country:"Royaume-Uni"
+                    },
+                    "ind": {
+                        color:'#c5b0d5',
+                        country:"Inde"
+                    },
+                    "jpn": {
+                        color:'#c7c7c7',
+                        country:"Japon"
+                    },
+                    "cis": {
+                        color:'#d62728',
+                        country:"Russie / URSS"
+                    },
+                    "other": {
+                        color:'#ffbb78',
+                        country:"Divers"
                     }
                 }
-            });*/
 
+                if(colors.hasOwnProperty(country.toLowerCase())){
+                    return colors[country.toLowerCase()]
+                }else{
+                    return colors.other
+                }
+            }
             function getSatelliteLocation(date, line1, line2) {
-                /****************************************************
-                 * satellite-js is a library that includes a set of
-                 * functions to convert TLE to geographic locations
-                 * We use this to get the geographic location of the
-                 * satellites for the current date. For more details
-                 * on satellite-js visib the github repo
-                 * https://github.com/shashwatak/satellite-js
-                 ****************************************************/
+
                 const satrec = satellite.twoline2satrec(line1, line2);
                 const position_and_velocity = satellite.propagate(
                         satrec,
@@ -334,12 +305,85 @@
                     z: height * 1000
                 };
             }
+
+            function setNb(country){
+                let c = getColor(country).country
+                if(c.toLowerCase() === "divers"){
+                    country = "other"
+                }
+                let sel = '[data-ct="'+country.toLowerCase()+'"]'
+                let nb = $(sel).find('b')
+
+                let value = parseInt(nb.text())
+
+                nb.text(value+1)
+
+
+                let total = '[data-ct="total"]'
+                let nbT = $(total).find('b')
+                let valueT = parseInt(nbT.text())
+                nbT.text(valueT+1)
+
+            }
         });
+
+
+
     </script>
 
 </head>
 
-<body>
+
+
+<body class="relative">
 {{{body}}}
+
+<div class="w-fit px-2 py-1 absolute bottom-16 left-16 rounded-md shadow-md bg-white flex flex-col">
+    <div class="flex py-1" data-ct="us">
+        <span class="rounded-full w-5 h-5 mr-4" style="background-color:#1f77b4" ></span>
+        Etats-Unis
+        <b class="ml-3">0</b>
+    </div>
+    <div class="flex py-1" data-ct="cis">
+        <span class="rounded-full w-5 h-5 mr-4" style="background-color:#c5b0d5" ></span>
+        Russie
+        <b class="ml-3">0</b>
+    </div>
+    <div class="flex py-1" data-ct="prc">
+        <span class="rounded-full w-5 h-5 mr-4" style="background-color:#ff7f0e" ></span>
+        Chine
+        <b class="ml-3">0</b>
+    </div>
+    <div class="flex py-1" data-ct="esa">
+        <span class="rounded-full w-5 h-5 mr-4" style="background-color:#82DEFA" ></span>
+        Europe
+        <b class="ml-3">0</b>
+    </div>
+    <div class="flex py-1" data-ct="ind">
+        <span class="rounded-full w-5 h-5 mr-4" style="background-color:#d62728" ></span>
+        Inde
+        <b class="ml-3">0</b>
+    </div>
+    <div class="flex py-1" data-ct="jpn">
+        <span class="rounded-full w-5 h-5 mr-4" style="background-color:#c7c7c7" ></span>
+        Japon
+        <b class="ml-3">0</b>
+    </div>
+    <div class="flex py-1" data-ct="uk">
+        <span class="rounded-full w-5 h-5 mr-4" style="background-color:#9467bd" ></span>
+        Royaume-Uni
+        <b class="ml-3">0</b>
+    </div>
+    <div class="flex py-1" data-ct="other">
+        <span class="rounded-full w-5 h-5 mr-4" style="background-color:#ffbb78" ></span>
+        Divers
+        <b class="ml-3">0</b>
+    </div>
+
+    <div class="flex py-1" data-ct="total">
+        Total
+        <b class="ml-3">0</b>
+    </div>
+</div>
 </body>
 </html>
