@@ -145,20 +145,30 @@
                     console.log(i, "/", arr.length)
                     let sat = arr[i];
                     let type = sat.type
+                    const launchYear = Number(sat.launchYear)
+
+
                     if(type.toLowerCase() !== "payload"){
                         continue;
                     }
+
+                    /*if(launchYear > 1980 ){
+                        continue;
+                    }*/
+                    /*if(launchYear >2000 ){
+                        continue;
+                    }*/
+
+
                     let commonName = sat.name
                     let line1 = sat.tle1
                     let line2 = sat.tle2
                     let time = Date.now();
                     let country = sat.country
 
-                    if(country.toLowerCase() === "cis"){
 
-                    }
 
-                    const launchYear = Number(sat.launchYear)
+
                     const launchNum = Number(sat.launchNum);
                     const noradId = Number(line1.substring(3, 7));
                     let satelliteLoc = null;
